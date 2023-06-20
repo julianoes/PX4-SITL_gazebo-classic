@@ -79,10 +79,12 @@ private:
   bool gps_noise_;
 
   std::string model_name_;
+  std::string sub_model_name_;
 
   sensors::GpsSensorPtr parentSensor_;
-  physics::ModelPtr model_;
-  physics::WorldPtr world_;
+  physics::ModelPtr model_{nullptr};
+  physics::LinkPtr link_{nullptr};
+  physics::WorldPtr world_{nullptr};
   event::ConnectionPtr updateWorldConnection_;
   event::ConnectionPtr updateSensorConnection_;
 

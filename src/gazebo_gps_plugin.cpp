@@ -62,8 +62,9 @@ void GpsPlugin::Load(sensors::SensorPtr _parent, sdf::ElementPtr _sdf)
   // get the root model name
   const string rootModelName = names_splitted.front();
 
-  // store the model name
+  // If we have a vehicle inside a "connector" vehicle, we want to one level in.
   model_name_ = names_splitted.at(0);
+  sub_model_name_ = names_splitted.at(1);
 
   // the second to the last name is the model name
   const string parentSensorModelName = names_splitted.rbegin()[1];
@@ -73,9 +74,7 @@ void GpsPlugin::Load(sensors::SensorPtr _parent, sdf::ElementPtr _sdf)
     gps_topic_ = _sdf->GetElement("topic")->Get<std::string>();
   } else {
     // if not set by parameter, get the topic name from the model name
-    gps_topic_ = parentSensorModelName;
-    gzwarn << "[gazebo_gps_plugin]: " + rootModelName + "::" + parentSensorModelName +
-      " using gps topic \"" << parentSensorModelName << "\"\n";
+    gps_topic_ = "gps";
   }
 
   // Store the pointer to the world.
@@ -217,43 +216,33 @@ void GpsPlugin::Load(sensors::SensorPtr _parent, sdf::ElementPtr _sdf)
 
   gravity_W_ = world_->Gravity();
 
-  gps_pub_ = node_handle_->Advertise<sensor_msgs::msgs::SITLGps>("~/" + rootModelName + "/link/" + gps_topic_, 10);
+  gps_pub_ = node_handle_->Advertise<sensor_msgs::msgs::SITLGps>("~/" + sub_model_name_ + "/" + gps_topic_, 10);
 }
 
 void GpsPlugin::OnWorldUpdate(const common::UpdateInfo& /*_info*/)
 {
   // Store the pointer to the model.
-  if (model_ == NULL)
-#if GAZEBO_MAJOR_VERSION >= 9
+  if (model_ == NULL) {
     model_ = world_->ModelByName(model_name_);
-#else
-    model_ = world_->GetModel(model_name_);
-#endif
+  }
+
+  if (link_ == nullptr) {
+    link_ = model_->GetLink(sub_model_name_ + "::" + "gps" + "::" + "link");
+  }
 
   common::Time current_time;
 
-#if GAZEBO_MAJOR_VERSION >= 9
   current_time = world_->SimTime();
-#else
-  current_time = world_->GetSimTime();
-#endif
   double dt = (current_time - last_time_).Double();
 
-#if GAZEBO_MAJOR_VERSION >= 9
-  ignition::math::Pose3d T_W_I = model_->WorldPose();
-#else
-  ignition::math::Pose3d T_W_I = ignitionFromGazeboMath(model_->GetWorldPose());
-#endif
+  ignition::math::Pose3d T_W_I = link_->WorldPose();
+
   // Use the model world position for GPS
   ignition::math::Vector3d& pos_W_I = T_W_I.Pos();
   ignition::math::Quaterniond& att_W_I = T_W_I.Rot();
 
   // Use the models' world position for GPS velocity.
-#if GAZEBO_MAJOR_VERSION >= 9
-  ignition::math::Vector3d velocity_current_W = model_->WorldLinearVel();
-#else
-  ignition::math::Vector3d velocity_current_W = ignitionFromGazeboMath(model_->GetWorldLinearVel());
-#endif
+  ignition::math::Vector3d velocity_current_W = link_->WorldLinearVel();
 
   ignition::math::Vector3d velocity_current_W_xy = velocity_current_W;
   velocity_current_W_xy.Z() = 0;

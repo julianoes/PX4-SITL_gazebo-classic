@@ -99,6 +99,12 @@ void MagnetometerPlugin::getSdfParams(sdf::ElementPtr sdf)
     gzwarn << "[gazebo_magnetometer_plugin] Using default magnetometer topic " << mag_topic_ << "\n";
   }
 
+  if(sdf->HasElement("magLink")) {
+    link_name_ = sdf->GetElement("magLink")->Get<std::string>();
+  } else {
+    gzwarn << "[gazebo_magnetometer_plugin] magLink missing\n";
+  }
+
   gt_sub_topic_ = "/groundtruth";
 }
 
@@ -107,6 +113,7 @@ void MagnetometerPlugin::Load(physics::ModelPtr model, sdf::ElementPtr sdf)
   getSdfParams(sdf);
 
   model_ = model;
+  link_ = model_->GetLink(link_name_);
   world_ = model_->GetWorld();
 #if GAZEBO_MAJOR_VERSION >= 9
   last_time_ = world_->SimTime();
@@ -196,11 +203,7 @@ void MagnetometerPlugin::OnUpdate(const common::UpdateInfo&)
 
     ignition::math::Vector3d magnetic_field_I(X, Y, Z);
 
-#if GAZEBO_MAJOR_VERSION >= 9
-    ignition::math::Pose3d T_W_I = model_->WorldPose();
-#else
-    ignition::math::Pose3d T_W_I = ignitionFromGazeboMath(model_->GetWorldPose());
-#endif
+    ignition::math::Pose3d T_W_I = link_->WorldPose();
     ignition::math::Quaterniond q_body_to_world = q_ENU_to_NED * T_W_I.Rot() * q_FLU_to_FRD.Inverse();
 
     ignition::math::Vector3d magnetic_field_B = q_body_to_world.RotateVectorReverse(magnetic_field_I);

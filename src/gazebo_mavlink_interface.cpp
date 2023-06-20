@@ -214,6 +214,7 @@ void GazeboMavlinkInterface::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf
   getSdfParam<std::string>(_sdf, "targetGpsSubTopic", target_gps_sub_topic_, target_gps_sub_topic_);
   getSdfParam<std::string>(_sdf, "arucoMarkerSubTopic", arucoMarker_sub_topic_, arucoMarker_sub_topic_);
   getSdfParam<std::string>(_sdf, "baroSubTopic", baro_sub_topic_, baro_sub_topic_);
+  getSdfParam<std::string>(_sdf, "gpsSubTopic", gps_sub_topic_, gps_sub_topic_);
   getSdfParam<std::string>(_sdf, "groundtruthSubTopic", groundtruth_sub_topic_, groundtruth_sub_topic_);
 
   // set input_reference_ from inputs.control
@@ -430,6 +431,7 @@ void GazeboMavlinkInterface::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf
   mag_sub_ = node_handle_->Subscribe("~/" + model_->GetName() + mag_sub_topic_, &GazeboMavlinkInterface::MagnetometerCallback, this);
   baro_sub_ = node_handle_->Subscribe("~/" + model_->GetName() + baro_sub_topic_, &GazeboMavlinkInterface::BarometerCallback, this);
   wind_sub_ = node_handle_->Subscribe("~/" + wind_sub_topic_, &GazeboMavlinkInterface::WindVelocityCallback, this);
+  gps_sub_ = node_handle_->Subscribe("~/" + gps_sub_topic_, &GazeboMavlinkInterface::GpsCallback, this);
 
   // Get the model joints
   auto joints = model_->GetJoints();
@@ -448,7 +450,7 @@ void GazeboMavlinkInterface::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf
   // Create subscriptions to the distance sensors
   CreateSensorSubscription(&GazeboMavlinkInterface::LidarCallback, this, joints, nested_model, kDefaultLidarModelNaming);
   CreateSensorSubscription(&GazeboMavlinkInterface::SonarCallback, this, joints, nested_model, kDefaultSonarModelNaming);
-  CreateSensorSubscription(&GazeboMavlinkInterface::GpsCallback, this, joints, nested_model, kDefaultGPSModelNaming);
+  //CreateSensorSubscription(&GazeboMavlinkInterface::GpsCallback, this, joints, nested_model, kDefaultGPSModelNaming);
   CreateSensorSubscription(&GazeboMavlinkInterface::AirspeedCallback, this, joints, nested_model, kDefaultAirspeedModelJointNaming);
 
   // Publish gazebo's motor_speed message
@@ -791,7 +793,7 @@ void GazeboMavlinkInterface::SendGroundTruth()
   }
 }
 
-void GazeboMavlinkInterface::GpsCallback(GpsPtr& gps_msg, const int& id) {
+void GazeboMavlinkInterface::GpsCallback(GpsPtr& gps_msg) {
   SensorData::Gps gps_data;
   gps_data.time_utc_usec = gps_msg->time_utc_usec();
   gps_data.fix_type = 3;
@@ -809,7 +811,7 @@ void GazeboMavlinkInterface::GpsCallback(GpsPtr& gps_msg, const int& id) {
   cog.Normalize();
   gps_data.cog = static_cast<uint16_t>(GetDegrees360(cog) * 100.0);
   gps_data.satellites_visible = 10;
-  gps_data.id = id;
+  gps_data.id = 0;
 
   mavlink_interface_->SendGpsMessages(gps_data);
 }
@@ -963,7 +965,7 @@ void GazeboMavlinkInterface::IRLockCallback(IRLockPtr& irlock_message) {
 }
 
 void GazeboMavlinkInterface::targetReleativeCallback(TargetRelativePtr& targetRelative_message) {
-  
+
   mavlink_target_relative_t sensor_msg;
   sensor_msg.timestamp = targetRelative_message->time_usec();
   sensor_msg.x = targetRelative_message->pos_x();

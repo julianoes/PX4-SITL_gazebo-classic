@@ -115,6 +115,7 @@ static const std::string kDefaultArucoMarkerTopic = "/aruco_cam/link/arucoMarker
 static const std::string kDefaultVisionTopic = "/vision_odom";
 static const std::string kDefaultMagTopic = "/mag";
 static const std::string kDefaultBarometerTopic = "/baro";
+static const std::string kDefaultGpsTopic = "/gps";
 static const std::string kDefaultWindTopic = "/world_wind";
 static const std::string kDefaultGroundtruthTopic = "/groundtruth";
 
@@ -176,7 +177,7 @@ private:
   event::ConnectionPtr sigIntConnection_;
 
   void ImuCallback(ImuPtr& imu_msg);
-  void GpsCallback(GpsPtr& gps_msg, const int& id);
+  void GpsCallback(GpsPtr& gps_msg);
   void TargetGpsCallback(GpsPtr& gps_msg);
   void GroundtruthCallback(GtPtr& groundtruth_msg);
   void LidarCallback(LidarPtr& lidar_msg, const int& id);
@@ -239,6 +240,7 @@ private:
   transport::SubscriberPtr mag_sub_{nullptr};
   transport::SubscriberPtr baro_sub_{nullptr};
   transport::SubscriberPtr wind_sub_{nullptr};
+  transport::SubscriberPtr gps_sub_{nullptr};
 
   Sensor_M sensor_map_{}; // Map of sensor SubscriberPtr, IDs and orientations
 
@@ -251,6 +253,7 @@ private:
   std::string vision_sub_topic_{kDefaultVisionTopic};
   std::string mag_sub_topic_{kDefaultMagTopic};
   std::string baro_sub_topic_{kDefaultBarometerTopic};
+  std::string gps_sub_topic_{kDefaultGpsTopic};
   std::string wind_sub_topic_{kDefaultWindTopic};
 
   std::mutex imu_received_mutex_ {};

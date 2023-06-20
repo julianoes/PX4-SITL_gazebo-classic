@@ -96,6 +96,12 @@ void BarometerPlugin::getSdfParams(sdf::ElementPtr sdf)
   } else {
     baro_drift_pa_per_sec_ = 0.0;
   }
+
+  if(sdf->HasElement("baroLink")) {
+    link_name_ = sdf->GetElement("baroLink")->Get<std::string>();
+  } else {
+    gzwarn << "[gazebo_barometer_plugin] baroLink missing\n";
+  }
 }
 
 void BarometerPlugin::Load(physics::ModelPtr model, sdf::ElementPtr sdf)
@@ -103,6 +109,7 @@ void BarometerPlugin::Load(physics::ModelPtr model, sdf::ElementPtr sdf)
   getSdfParams(sdf);
 
   model_ = model;
+  link_ = model_->GetLink(link_name_);
   world_ = model_->GetWorld();
 #if GAZEBO_MAJOR_VERSION >= 9
   last_time_ = world_->SimTime();
@@ -140,7 +147,7 @@ void BarometerPlugin::OnUpdate(const common::UpdateInfo&)
 
     // get pose of the model that the plugin is attached to
 #if GAZEBO_MAJOR_VERSION >= 9
-    const ignition::math::Pose3d pose_model_world = model_->WorldPose();
+    const ignition::math::Pose3d pose_model_world = link_->WorldPose();
 #else
     const ignition::math::Pose3d pose_model_world = ignitionFromGazeboMath(model_->GetWorldPose());
 #endif

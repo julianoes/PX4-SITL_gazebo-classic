@@ -88,9 +88,11 @@ namespace gazebo {
   private:
     std::string namespace_;
     physics::ModelPtr model_;
+    physics::LinkPtr link_;
     physics::WorldPtr world_;
     event::ConnectionPtr update_connection_;
     std::string baro_topic_;
+    std::string link_name_;
 
     transport::NodePtr node_handle_;
     transport::PublisherPtr pub_baro_;

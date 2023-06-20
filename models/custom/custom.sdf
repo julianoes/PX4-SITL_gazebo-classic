@@ -1,0 +1,14 @@
+<sdf version='1.6'>
+  <model name='custom'>
+    <include>
+      <uri>model://custom_1</uri>
+      <pose>0 0 0 0 0 0</pose>
+      <name>custom_1</name>
+    </include>
+    <include>
+      <uri>model://custom_2</uri>
+      <pose>2.0 0 0 0 0 0</pose>
+      <name>custom_2</name>
+    </include>
+  </model>
+</sdf>
